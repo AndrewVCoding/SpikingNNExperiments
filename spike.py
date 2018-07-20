@@ -52,12 +52,12 @@ if __name__ == '__main__':
 
     input_layer = nn.history
 
-    plt.subplot(2, 1, 1)
+    plt.subplot(1, 1, 1)
     plt.plot(timesteps, input_layer)
+    plt.plot(timesteps, activations)
     plt.xlabel('time step')
     plt.ylabel('activation')
     plt.title('Input Layer Stimulus')
-    plt.plot(timesteps, activations)
 
     plt.grid()
 

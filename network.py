@@ -10,7 +10,7 @@ class Netowrk:
         self.hidden_neurons = hidden_neurons
         self.output_neurons = output_neurons
 
-        self.neuron = np.zeros(input_neurons + hidden_neurons + output_neurons) - 2.0
+        self.neuron = np.zeros(input_neurons + hidden_neurons + output_neurons) - 0.0
 
         self.threshold = 20.0
 
