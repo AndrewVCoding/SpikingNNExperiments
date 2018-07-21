@@ -1,5 +1,10 @@
 import matplotlib.pyplot as plt
 import time
+
+from mpl_toolkits.mplot3d import Axes3D
+from matplotlib.collections import PolyCollection
+from matplotlib import colors as mcolors
+
 import network
 import numpy as np
 import math
@@ -42,25 +47,45 @@ if __name__ == '__main__':
 
     nn = network.Network()
 
-    timesteps = [0.0]
-    activations = [0.0]
-    for t in range(0, 500):
-        activation = 12.0 if math.sin(t / 20) > 0.99 else 0.0
-        input = np.array([activation, activation, 0, 0])
+    timesteps = []
+    activations = []
+    for t in range(0, 1000):
+        activation = 10 if math.sin(t / 10) > 0.99 else 0
+        input = np.array([activation])
         nn.step(input)
         activations.append(activation)
         timesteps.append(t)
 
-    input_layer = nn.history
+    xyz = np.array(nn.data)
 
-    plt.subplot(1, 1, 1)
-    plt.plot(timesteps, input_layer)
-    for n in np.transpose(nn.history):
-        plt.plot(timesteps, n)
-    plt.xlabel('time step')
-    plt.ylabel('activation')
-    plt.title('Input Layer Stimulus')
+    fig = plt.figure()
+    # ax = fig.add_subplot(111, projection='3d')
+    ax = fig.add_subplot(111)
 
+    # Plot the input signal
+    ax.plot(timesteps, activations)
+
+    N = 0
+    for N in range(0, len(nn.neuron)):
+        xyz2 = []
+        for point in xyz:
+            if point[0] == N:
+                xyz2.append(point)
+
+        xyz2 = np.array(xyz2)
+        # Voltage
+        z = xyz2[:, 2]
+        # Time
+        y = xyz2[:, 1]
+        # Neuron
+        x = xyz2[:, 0]
+
+        # ax.plot(x, y, z)
+        ax.plot(y, z)
+
+    ax.set_xlabel('Time')
+    ax.set_ylabel('Potential(mV)')
+    # ax.set_zlabel('POTENTIAL')
     plt.grid()
 
     plt.show()
