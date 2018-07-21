@@ -16,7 +16,7 @@ def time_trial():
         t1 = time.time()
         for n in range(0, 50):
             trial = []
-            net = network.Netowrk(i)
+            net = network.Network(i)
             t1 = time.time()
             for t in range(0, 100):
                 activation = 10.0 if 0.1 * math.sin(t / 20) > 0.099 else 0.0
@@ -40,13 +40,14 @@ def time_trial():
 if __name__ == '__main__':
     np.set_printoptions(precision=2)
 
-    nn = network.Netowrk()
+    nn = network.Network()
 
     timesteps = [0.0]
     activations = [0.0]
-    for t in range(0, 1000):
-        activation = 12.0 if 0.1 * math.sin(t / 20) > 0.099 else 0.0
-        nn.step(activation)
+    for t in range(0, 500):
+        activation = 12.0 if math.sin(t / 20) > 0.99 else 0.0
+        input = np.array([activation, activation, 0, 0])
+        nn.step(input)
         activations.append(activation)
         timesteps.append(t)
 
@@ -54,7 +55,8 @@ if __name__ == '__main__':
 
     plt.subplot(1, 1, 1)
     plt.plot(timesteps, input_layer)
-    plt.plot(timesteps, activations)
+    for n in np.transpose(nn.history):
+        plt.plot(timesteps, n)
     plt.xlabel('time step')
     plt.ylabel('activation')
     plt.title('Input Layer Stimulus')

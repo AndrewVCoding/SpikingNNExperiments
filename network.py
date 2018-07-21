@@ -3,20 +3,24 @@ import random
 import math
 
 
-class Netowrk:
+class Network:
 
-    def __init__(self, input_neurons=10, hidden_neurons=20, output_neurons=10, axon_density=0.2):
+    def __init__(self, input_neurons=2, hidden_neurons=1, output_neurons=1, axon_density=0.2):
         self.input_neurons = input_neurons
         self.hidden_neurons = hidden_neurons
         self.output_neurons = output_neurons
 
-        self.neuron = np.zeros(input_neurons + hidden_neurons + output_neurons) - 0.0
+        size = input_neurons + hidden_neurons + output_neurons
 
-        self.threshold = 20.0
+        self.neuron = np.zeros(size, dtype=np.double)
 
-        self.resting_potential = 0.0
+        self.threshold = np.zeros(size, dtype=np.double) + 20.0
 
-        self.activation = self.neuron.copy()
+        self.resting_potential = np.zeros(size, dtype=np.double)
+
+        self.axon = np.array([[0, 0, 0, 0], [0, 0, 0, 0], [1, 1, 0, 0], [0, 0, 1, 0]])
+
+        self.activation = np.zeros(size, dtype=np.double)
 
         self.state = np.array([self.neuron, self.threshold, self.resting_potential, self.activation])
 
@@ -24,10 +28,12 @@ class Netowrk:
 
         self.return_rates = 1.1
 
-    def activate(self, activation):
-        self.neuron[0, :] = activation
+    def activate(self, input):
+        self.activation[:] = np.sum(self.axon * self.neuron, axis=1) + input
+        print(self.activation)
 
-    def step(self, activation):
+    def step(self, input):
+        self.activate(input)
 
         x = self.neuron
 
@@ -48,6 +54,6 @@ class Netowrk:
         # The threshold term 2/(1+e^(-10x + 190))
         n = 1.0 / (1.0 + np.exp(-1.0 * (s - 22.0)))
 
-        self.neuron = s + (n + r) * activation
+        self.neuron = s + (n + r) * self.activation
         self.state = np.array([self.neuron, self.threshold, self.resting_potential, self.activation])
-        self.history.append(self.neuron[0])
+        self.history.append(self.neuron[-1])
