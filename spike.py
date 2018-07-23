@@ -47,16 +47,10 @@ if __name__ == '__main__':
 
     nn = network.Network()
 
-    timesteps = []
+    timesteps = np.linspace(-10, 10, 2000)
     activations = []
-    for t in range(0, 1000):
-        activation = 10 if math.sin(t / 10) > 0.99 else 0
-        input = np.array([activation])
-        nn.step(input)
-        activations.append(activation)
-        timesteps.append(t)
-
-    xyz = np.array(nn.data)
+    for t in timesteps:
+        activations.append(nn.graded_potential(2.5, 10, 10, t))
 
     fig = plt.figure()
     # ax = fig.add_subplot(111, projection='3d')
@@ -64,26 +58,26 @@ if __name__ == '__main__':
 
     # Plot the input signal
     ax.plot(timesteps, activations)
+    #
+    # N = 0
+    # for N in range(0, len(nn.neuron)):
+    #     xyz2 = []
+    #     for point in xyz:
+    #         if point[0] == N:
+    #             xyz2.append(point)
+    #
+    #     xyz2 = np.array(xyz2)
+    #     # Voltage
+    #     z = xyz2[:, 2]
+    #     # Time
+    #     y = xyz2[:, 1]
+    #     # Neuron
+    #     x = xyz2[:, 0]
+    #
+    #     # ax.plot(x, y, z)
+    #     ax.plot(y, z)
 
-    N = 0
-    for N in range(0, len(nn.neuron)):
-        xyz2 = []
-        for point in xyz:
-            if point[0] == N:
-                xyz2.append(point)
-
-        xyz2 = np.array(xyz2)
-        # Voltage
-        z = xyz2[:, 2]
-        # Time
-        y = xyz2[:, 1]
-        # Neuron
-        x = xyz2[:, 0]
-
-        # ax.plot(x, y, z)
-        ax.plot(y, z)
-
-    ax.set_xlabel('Time')
+    ax.set_xlabel('position')
     ax.set_ylabel('Potential(mV)')
     # ax.set_zlabel('POTENTIAL')
     plt.grid()
