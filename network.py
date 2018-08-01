@@ -17,128 +17,36 @@ class Network:
         # Neuron Properties
         self.t = 0.0
         self.clean_time = 25.0
-        self.mp = 0.0
-
-        # Input signals to the neuron
-        self.graded_potentials = []
-
-        # Chemical Values
-        # Organic Anions are created inside the neuron
-        self.OA = 0.0
-        self.OA_max = 5.0
-        self.K = 0.0
-        self.NA = 0.0
-        self.CL = 0.0
-        self.CA = 0.0
-
-        # Diffusion Force Values
-        self.OA_diffuse = -1.0
-        self.K_diffuse = 1.0
-        self.NA_diffuse = 1.0
-        self.CL_diffuse = 1.0
-        self.CA_diffuse = 1.0
-
-        # Electrical force values
-        self.OA_electric = -1.0
-        self.K_electric = -1.0
-        self.NA_electric = 1.0
-        self.CL_electric = -1.0
-        self.CA_electric = 1.0
-
-        # Chemical Gate Values
-        self.OA_pass = 0.0
-        self.K_leak = 0.2
-        self.NA_leak = 0.2
+        self.membrane_potential = 0.0
+        self.external_charge = 100.0
+        self.flow = 0.0
         self.resting_potential = -60.0
+        self.threshold_potential = -50.0
+        self.return_rate = 0.0
+        self.graded_potential = 2.0
+        self.rest_proximity = 0.0
 
-    def clean_up(self):
-        # Get rid of useless elements
-        self.graded_potentials = [gp for gp in self.graded_potentials if gp[1] < 110.0 and abs(gp[0]) > 0.01]
+    def calculate_mp(self, input):
+        # Model the flow of ions into or out of the neuron
+        # A factor of how far below the resting potential the current membrane potential is
+        self.rest_proximity = 2 / (1 + math.exp(-(self.membrane_potential - (self.resting_potential - 10)))) - 1
 
-    def generate_oa(self):
-        self.OA += -0.1 * (self.OA - 5.0)
+        # The natural return rate of the neuron
+        self.return_rate = -(2 / (1 + math.exp(-(self.membrane_potential - self.resting_potential))) - 1)
+        # self.return_rate = 1 - math.exp((-(self.membrane_potential - self.resting_potential) ** 2) / 10)
 
-    def membrane_potential(self):
-        self.mp = -80 + (self.OA + self.K + self.NA)
+        # model the graded potentials affecting the neuron
+        # Should be a number that slowly degrades back to zero but with a delay
+        self.graded_potential = 0.5 * self.graded_potential + input
 
-    def NaK_pump(self):
-        """
-        3 Na out for 2 K in
-        :return:
-        """
-        strength = 0.1
-        # strength = 0.9 * (self.mp - self.resting_potential)
-        self.NA -= 3 * strength
-        self.K += 2 * strength
-
-    def ClK_pump(self):
-        """
-        1 Cl out and 1 K out
-        :return:
-        """
-        strength = 0.01
-        self.CL -= 1 * strength
-        self.K -= 1 * strength
-
-    def CaNa_pump(self):
-        """
-        1 Ca out for 1 Na in
-        :return:
-        """
-        strength = 0.01
-        self.CA -= 1 * strength
-        self.NA += 1 * strength
-
-    def model_diffusion_force(self):
-        """
-        Negative values represent a force pushing ions out of the neuron
-        Positive values represent a force pushing ions into the neuron
-
-        OA should be negative
-        NA should be positive at rest
-        K+ should be positive at rest, and should then match the electrical force
-        Cl should be positive at rest
-        Ca
-        :return:
-        """
-        self.OA_diffuse = -0.1 * self.OA
-        self.NA_diffuse = -0.1 * self.NA
-        self.K_diffuse = -0.1 * self.K
-        self.CL_diffuse = -0.1 * self.CL
-        self.CA_diffuse = -0.1 * self.CA
-
-    def model_electrical_force(self):
-        """
-        Negative values represent a force pushing ions out of the neuron
-        Positive values represent a force pushing ions into the neuron
-
-        :return:
-        """
-        self.OA_electric = 2 / (1 + math.exp(-0.1 * self.mp))
-        self.NA_electric = -2 / (1 + math.exp(-0.1 * self.mp))
-        self.K_electric = -0.1 * self.mp
-        self.CL_electric = 2 / (1 + math.exp(-0.1 * self.mp))
-        self.CA_electric = -2 / (1 + math.exp(-0.1 * self.mp))
-
-    def leak(self):
-        rate = 0.1
-        self.OA += self.OA_pass * (self.OA_diffuse + self.OA_electric)
-        self.K += rate * (self.K_diffuse + self.K_electric)
-        self.NA += rate * (self.NA_diffuse + self.NA_electric)
-        self.CL += rate * (self.CL_diffuse + self.CL_electric)
-        self.CA += rate * (self.CA_diffuse + self.CA_electric)
+        self.flow = math.exp(-self.graded_potential / 20)
+        self.membrane_potential += self.return_rate + self.rest_proximity * self.flow * self.graded_potential
+        # print(self.membrane_potential)
 
     def step(self, input):
         # Increment Time step
         self.t += self.timeStepSize
         self.time_since_clean += self.timeStepSize
 
-        # Model the chemical levels
-        self.model_diffusion_force()
-        self.model_electrical_force()
-        self.leak()
-        self.generate_oa()
-        # self.NaK_pump()
-        self.membrane_potential()
-
-        self.mp += input
+        # Model the ion levels
+        self.calculate_mp(input)
