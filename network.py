@@ -3,50 +3,36 @@ import random
 import math
 
 
-class Network:
+class Netowrk:
+    def __init__(self, input_neurons=10, hidden_neurons=20, output_neurons=10, axon_density=0.2):
+        self.input_neurons = input_neurons
+        self.hidden_neurons = hidden_neurons
+        self.output_neurons = output_neurons
+        self.neuron = np.zeros(input_neurons + hidden_neurons + output_neurons) - 2.0
+        self.threshold = 20.0
+        self.resting_potential = 0.0
+        self.activation = self.neuron.copy()
+        self.state = np.array([self.neuron, self.threshold, self.resting_potential, self.activation])
+        self.history = [0.0]
+        self.return_rates = 1.1
 
-    # @todo Redesign with Na/K pump and membrane potentials using cell size
-    # @todo Design a function to build a network of any size with the proper connections
-    def __init__(self, input_neurons=1, hidden_neurons=1, output_neurons=1, axon_density=0.2):
-        np.random.seed(0)
+    def activate(self, activation):
+        self.neuron[0, :] = activation
 
-        # Simulation Settings
-        self.time_since_clean = 0.0
-        self.timeStepSize = 0.1
-
-        # Neuron Properties
-        self.t = 0.0
-        self.clean_time = 25.0
-        self.membrane_potential = 0.0
-        self.external_charge = 100.0
-        self.flow = 0.0
-        self.resting_potential = -60.0
-        self.threshold_potential = -50.0
-        self.return_rate = 0.0
-        self.graded_potential = 2.0
-        self.rest_proximity = 0.0
-
-    def calculate_mp(self, input):
-        # Model the flow of ions into or out of the neuron
-        # A factor of how far below the resting potential the current membrane potential is
-        self.rest_proximity = 2 / (1 + math.exp(-(self.membrane_potential - (self.resting_potential - 10)))) - 1
-
-        # The natural return rate of the neuron
-        self.return_rate = -(2 / (1 + math.exp(-(self.membrane_potential - self.resting_potential))) - 1)
-        # self.return_rate = 1 - math.exp((-(self.membrane_potential - self.resting_potential) ** 2) / 10)
-
-        # model the graded potentials affecting the neuron
-        # Should be a number that slowly degrades back to zero but with a delay
-        self.graded_potential = 0.5 * self.graded_potential + input
-
-        self.flow = math.exp(-self.graded_potential / 20)
-        self.membrane_potential += self.return_rate + self.rest_proximity * self.flow * self.graded_potential
-        # print(self.membrane_potential)
-
-    def step(self, input):
-        # Increment Time step
-        self.t += self.timeStepSize
-        self.time_since_clean += self.timeStepSize
-
-        # Model the ion levels
-        self.calculate_mp(input)
+    def step(self, activation):
+        x = self.neuron
+        # decay
+        # The decay term to bring the potential back towards 0.0
+        d = 0.5 / np.exp(10 * np.power(x - self.resting_potential, 2) / 1000)
+        # The action potential fire term to reduce the potential back towards rest
+        f = 1.1 / (np.exp(50 * (x - self.threshold - 1.0)) + 1.0) - 0.6
+        # Apply the decay rate to the network potential
+        s = (f + d) * x
+        # Calculate the effect of the action potential based on the current potential
+        # The resting term 1/(1+e^(-10x))
+        r = 1.0 / (1.0 + np.exp(-10.0 * (s + 0.0)))
+        # The threshold term 2/(1+e^(-10x + 190))
+        n = 1.0 / (1.0 + np.exp(-1.0 * (s - 22.0)))
+        self.neuron = s + (n + r) * activation
+        self.state = np.array([self.neuron, self.threshold, self.resting_potential, self.activation])
+        self.history.append(self.neuron[0])

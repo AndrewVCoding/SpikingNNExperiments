@@ -1,81 +1,55 @@
-import random
-import math
-
 import matplotlib.pyplot as plt
-import matplotlib.animation as animation
-from matplotlib import style
 import time
-
 import network
 import numpy as np
-
-simulation_speed = 2
-
-fig = plt.figure()
-fig.subplots_adjust(wspace=1.0, hspace=1.0)
-flow_subplot = fig.add_subplot(2, 1, 2)
-mp_subplot = fig.add_subplot(2, 1, 1)
-nn = network.Network()
-
-window = 200
-
-mp = []
-rr = []
-t = []
-inputs = []
+import math
 
 
-def simulate():
-    # Retrieve the relevant information
-    t.append(nn.t)
-    if len(t) >= window:
-        t.pop(0)
-    mp.append(nn.membrane_potential)
-    if len(mp) >= window:
-        mp.pop(0)
-    rr.append(nn.rest_proximity)
-    if len(rr) >= window:
-        rr.pop(0)
-
-    input = 1.0 * math.sin(nn.t / 1) if math.sin(nn.t / 5) > 0.9 else 0.0
-    inputs.append(input)
-    if len(inputs) >= window:
-        inputs.pop(0)
-
-    nn.step(input)
-
-
-def mp_graph():
-    xs = t
-    ys = mp
-    mp_subplot.clear()
-    mp_subplot.plot(xs, ys)
-    mp_subplot.plot(xs, inputs)
-    mp_subplot.set_ylabel('membrane potential (mV)')
-    mp_subplot.set_ylim(-80, 50)
-
-
-def flow_graph():
-    xs = t
-    ys = rr
-    flow_subplot.clear()
-    flow_subplot.plot(xs, ys)
-    flow_subplot.set_ylabel('return rate')
-    flow_subplot.set_xlabel('time')
-    # oa_subplot.set_ylim(-70, 20)
-
-
-def animate(i):
-    for x in range(0, simulation_speed):
-        simulate()
-    mp_graph()
-    flow_graph()
+def time_trial():
+    x = []
+    times = []
+    start = time.time()
+    for i in range(900, 1000):
+        trial = []
+        x.append(i)
+        t1 = time.time()
+        for n in range(0, 50):
+            trial = []
+            net = network.Netowrk(i)
+            t1 = time.time()
+            for t in range(0, 100):
+                activation = 10.0 if 0.1 * math.sin(t / 20) > 0.099 else 0.0
+                net.step(activation)
+            t2 = time.time()
+            trial.append(t2 - t1)
+        times.append(np.mean(trial))
+        print(i, ' neurons simulated in ', time.time() - t1, ' seconds')
+    print('Total Time: ', time.time() - start)
+    fig, ax = plt.subplots(figsize=(12, 7))
+    ax.scatter(x, times)
+    ax.set_xlabel('neurons')
+    ax.set_ylabel('avg time (seconds)')
+    ax.set_title('Time per 100 Simulation steps averaged across 50 trials')
+    plt.grid()
+    plt.show()
 
 
 if __name__ == '__main__':
     np.set_printoptions(precision=2)
-    # style.use('fivethirtyeight')
-
-    ani = animation.FuncAnimation(fig, animate, interval=1)
-
+    nn = network.Netowrk()
+    timesteps = [0.0]
+    activations = [0.0]
+    for t in range(0, 1000):
+        activation = 12.0 if 0.1 * math.sin(t / 20) > 0.099 else 0.0
+        nn.step(activation)
+        activations.append(activation)
+        timesteps.append(t)
+    input_layer = nn.history
+    plt.subplot(2, 1, 1)
+    plt.plot(timesteps, input_layer)
+    plt.xlabel('time step')
+    plt.ylabel('activation')
+    plt.title('Input Layer Stimulus')
+    plt.plot(timesteps, activations)
+    plt.grid()
     plt.show()
