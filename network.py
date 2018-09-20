@@ -23,6 +23,8 @@ class Netowrk:
         x = self.neuron
         # decay
         # The decay term to bring the potential back towards 0.0
+        # Need to only use this rapid decay rate following an action potential, otherwise use a slower one.
+        #@todo
         d = 0.5 / np.exp(10 * np.power(x - self.resting_potential, 2) / 1000)
         # The action potential fire term to reduce the potential back towards rest
         f = 1.1 / (np.exp(50 * (x - self.threshold - 1.0)) + 1.0) - 0.6

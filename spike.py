@@ -40,7 +40,7 @@ if __name__ == '__main__':
     timesteps = [0.0]
     activations = [0.0]
     for t in range(0, 1000):
-        activation = 12.0 if 0.1 * math.sin(t / 20) > 0.099 else 0.0
+        activation = 2.0 if 0.1 * math.sin(t / 5) > 0.099 else 0.0
         nn.step(activation)
         activations.append(activation)
         timesteps.append(t)
