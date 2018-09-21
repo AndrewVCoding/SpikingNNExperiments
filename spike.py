@@ -8,13 +8,14 @@ import math
 
 
 simulation_speed = 10
+pause = False
 
 fig = plt.figure()
-fig.subplots_adjust(wspace=1.0, hspace=1.0)
+fig.subplots_adjust(wspace=2.0, hspace=2.0)
 # oa_subplot = fig.add_subplot(2, 2, 2)
-mp_subplot = fig.add_subplot(1, 1, 1)
-# na_subplot = fig.add_subplot(2, 2, 3)
-# k_subplot = fig.add_subplot(2, 2, 4)
+mp_subplot = fig.add_subplot(3, 1, 1)
+nc_subplot = fig.add_subplot(3, 1, 2)
+pc_subplot = fig.add_subplot(3, 1, 3)
 nn = network.Network()
 
 window = 200
@@ -24,6 +25,11 @@ mp = []
 na = []
 k = []
 inputs = []
+
+
+def onClick(event):
+    global pause
+    pause ^= True
 
 
 def time_trial():
@@ -65,14 +71,11 @@ def time_trial():
 def simulate(i):
     input = 0.0
 
-    if 50 < i < 60:
-        input = 0.0
+    if 100 < i < 120:
+        input = 2.0
 
-    inputs.append(input)
-    if len(inputs) >= window:
-        inputs.pop(0)
-
-    nn.step(input)
+    if not pause:
+        nn.step(input)
 
 
 def get_window(x):
@@ -85,14 +88,34 @@ def mp_graph():
     mp_subplot.clear()
     mp_subplot.plot(xs, ys)
     mp_subplot.plot(xs, nn.activation_history)
-    mp_subplot.set_ylabel('membrane potential (mV)')
-    mp_subplot.set_ylim(-80, 50)
+    mp_subplot.set_ylabel('(mV)')
+    mp_subplot.set_ylim(-50, 50)
+
+
+def n_channel_graph():
+    xs = nn.t
+    ys = nn.np
+    nc_subplot.clear()
+    nc_subplot.plot(xs, ys)
+    nc_subplot.set_ylabel('n_ions')
+    # nc_subplot.set_ylim(-80, 50)
+
+
+def p_channel_graph():
+    xs = nn.t
+    ys = nn.pp
+    pc_subplot.clear()
+    pc_subplot.plot(xs, ys)
+    pc_subplot.set_ylabel('d(n_ion)/d(t)')
+    # pc_subplot.set_ylim(-80, 50)
 
 
 def animate(i):
     for x in range(0, 1):
         simulate(i)
     mp_graph()
+    n_channel_graph()
+    p_channel_graph()
 
 
 if __name__ == '__main__':
@@ -100,6 +123,7 @@ if __name__ == '__main__':
 
     print(nn.t, nn.activation_history)
 
+    fig.canvas.mpl_connect('button_press_event', onClick)
     ani = animation.FuncAnimation(fig, animate, interval=1)
 
     plt.show()

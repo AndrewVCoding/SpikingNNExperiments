@@ -18,15 +18,15 @@ class Network:
         size = input_neurons + hidden_neurons + output_neurons
 
         # Create an ndarray of zeros to represent the potential of each neuron
-        self.neuron = 0.0
+        self.neuron = -10.0
 
         # Generate the threshold for each neuron
         # self.threshold = np.zeros(size, dtype=np.double) + 20.0
-        self.threshold_potential = 60.0
+        self.threshold_potential = 20
 
         # Generate the resting potential of each neuron
         # self.resting_potential = np.zeros(size, dtype=np.double)
-        self.resting_potential = 5
+        self.resting_potential = -20.0
 
         # Set the decay rate of each neuron
         self.decay = 0.5
@@ -41,7 +41,13 @@ class Network:
 
         self.activation_history = [0.0]
         self.mp = [0.0]
+        self.np = [0.0]
+        self.pp = [0.0]
         self.t = [0.0]
+
+        # The percentage of negative and positive ion channels open
+        self.n = 0.0
+        self.p = 0.0
 
         self.time_step = 0.1
 
@@ -58,24 +64,39 @@ class Network:
 
         x = self.neuron
 
-        # decay
-        # The decay term to bring the potential back towards resting potential
-        d = self.decay / (np.exp(0.1 * (x - (self.resting_potential))) + 1) - 0 / (
-                np.exp(-1 * (x - (self.resting_potential))) + 1) - (self.decay / 2) - 40 / (
-                    1 + np.exp(-10 * (x - self.threshold_potential)))
+        # Leakage of voltage into the cell brings the voltage to zero
+        leak = -0.01 * (x + 5)
 
-        # Apply the decay rate to the network potential
-        s = x + d
+        # Absolute proximity of membrane potential to the resting potential
+        prox_abs = 1 - np.exp(-0.01 * (x-self.resting_potential) ** 4)
 
-        # Calculate the effect of the action potential based on the current potential
-        # The resting term 1/(1+e^(-10x))
-        p = 1 / (1 + np.exp(-10 * (x - self.resting_potential))) + 3 / (1 + np.exp(-10 * (x - self.threshold_potential))) - (
-                    4 / (1 + np.exp(-10 * (x - self.threshold_potential * 1.05))))
+        # distance of membrane potential from the resting potential as a sigmoid function
+        dist = 2 / (1 + np.exp(-0.1 * (x - self.resting_potential))) - 1
 
-        # Calculate the final potential of each neuron at this time step
-        self.neuron = s + p * self.activation
+        # rate of ion channels opening based on membrane potential
+        n_open = -1 / (1 + np.exp(-1 * (x - self.resting_potential)))
 
-        self.mp.append(s + p * self.activation)
+        self.n += n_open
+        # n = -1 / (1 + np.exp(-1 * self.n)) + 0.5
+
+        # self.p += 0.5 * (-1 / (1 + np.exp(-0.1 * (x - self.resting_potential))))
+        p = -0.0 * (x - self.resting_potential)
+        self.n += p
+
+
+        # Test values
+        # n = 0.0
+        # p = 0.0
+
+        a = input / (1 + np.exp(-(x - self.resting_potential)))
+
+        # print('n: ', self.n, '\np: ', self.p, '\na: ', a, '\n')
+
+        self.neuron += n_open + leak + a
+
+        self.mp.append(self.neuron)
+        self.np.append(self.n)
+        self.pp.append(n_open)
         self.t.append(self.t[-1] + self.time_step)
 
         return self.neuron
