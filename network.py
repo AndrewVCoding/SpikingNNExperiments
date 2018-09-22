@@ -18,7 +18,7 @@ class Network:
         size = input_neurons + hidden_neurons + output_neurons
 
         # Create an ndarray of zeros to represent the potential of each neuron
-        self.neuron = -10.0
+        self.neuron = 0.0
 
         # Generate the threshold for each neuron
         # self.threshold = np.zeros(size, dtype=np.double) + 20.0
@@ -26,7 +26,7 @@ class Network:
 
         # Generate the resting potential of each neuron
         # self.resting_potential = np.zeros(size, dtype=np.double)
-        self.resting_potential = -20.0
+        self.resting_potential = -30.0
 
         # Set the decay rate of each neuron
         self.decay = 0.5
@@ -48,6 +48,7 @@ class Network:
         # The percentage of negative and positive ion channels open
         self.n = 0.0
         self.p = 0.0
+        self.p_open = 0.0
 
         self.time_step = 0.1
 
@@ -64,39 +65,28 @@ class Network:
 
         x = self.neuron
 
-        # Leakage of voltage into the cell brings the voltage to zero
-        leak = -0.01 * (x + 5)
+        # rate of positive ion channels opening or closing goes down when there is an input signal
+        # Starts at 1, approaches 0 when an input is applied
+        p_rate = 1 - (2 / (1 + np.exp(-1 * input)) - 1)
+        # The number of positive ions added is the input - the rate of p_ion channels closing
+        self.p += input - 0.1 * p_rate * self.p
 
-        # Absolute proximity of membrane potential to the resting potential
-        prox_abs = 1 - np.exp(-0.01 * (x-self.resting_potential) ** 4)
-
-        # distance of membrane potential from the resting potential as a sigmoid function
-        dist = 2 / (1 + np.exp(-0.1 * (x - self.resting_potential))) - 1
+        # Suppression of negative ion channels opening due to input
+        s = 1 * np.exp(-0.01 * self.p ** 2)
 
         # rate of ion channels opening based on membrane potential
-        n_open = -1 / (1 + np.exp(-1 * (x - self.resting_potential)))
+        n_open = 2 / (1 + np.exp(-1 * (x - self.resting_potential))) - 0.5
 
-        self.n += n_open
+        self.n += s * n_open
         # n = -1 / (1 + np.exp(-1 * self.n)) + 0.5
-
-        # self.p += 0.5 * (-1 / (1 + np.exp(-0.1 * (x - self.resting_potential))))
-        p = -0.0 * (x - self.resting_potential)
-        self.n += p
-
-
-        # Test values
-        # n = 0.0
-        # p = 0.0
-
-        a = input / (1 + np.exp(-(x - self.resting_potential)))
 
         # print('n: ', self.n, '\np: ', self.p, '\na: ', a, '\n')
 
-        self.neuron += n_open + leak + a
+        self.neuron = -s * self.n
 
         self.mp.append(self.neuron)
-        self.np.append(self.n)
-        self.pp.append(n_open)
+        self.np.append(s)
+        self.pp.append(self.n)
         self.t.append(self.t[-1] + self.time_step)
 
         return self.neuron

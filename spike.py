@@ -11,7 +11,7 @@ simulation_speed = 10
 pause = False
 
 fig = plt.figure()
-fig.subplots_adjust(wspace=2.0, hspace=2.0)
+fig.subplots_adjust(wspace=2.0, hspace=1.0)
 # oa_subplot = fig.add_subplot(2, 2, 2)
 mp_subplot = fig.add_subplot(3, 1, 1)
 nc_subplot = fig.add_subplot(3, 1, 2)
@@ -50,7 +50,7 @@ def time_trial():
             net = network.Network(i)
             t1 = time.time()
             for t in range(0, 100):
-                activation = 10.0 if 0.1 * math.sin(t / 20) > 0.099 else 0.0
+                activation = 10.0 if math.sin(t / 20) > 0.099 else 0.0
                 net.step(activation)
             t2 = time.time()
             trial.append(t2 - t1)
@@ -71,11 +71,13 @@ def time_trial():
 def simulate(i):
     input = 0.0
 
-    if 100 < i < 120:
-        input = 2.0
+    if pause:
+        input = 0.5
 
-    if not pause:
-        nn.step(input)
+    nn.step(input)
+
+    # if not pause:
+    #     nn.step(input)
 
 
 def get_window(x):
@@ -89,7 +91,7 @@ def mp_graph():
     mp_subplot.plot(xs, ys)
     mp_subplot.plot(xs, nn.activation_history)
     mp_subplot.set_ylabel('(mV)')
-    mp_subplot.set_ylim(-50, 50)
+    # mp_subplot.set_ylim(-50, 50)
 
 
 def n_channel_graph():
@@ -107,7 +109,7 @@ def p_channel_graph():
     pc_subplot.clear()
     pc_subplot.plot(xs, ys)
     pc_subplot.set_ylabel('d(n_ion)/d(t)')
-    # pc_subplot.set_ylim(-80, 50)
+    # pc_subplot.set_ylim(-5, 5)
 
 
 def animate(i):
