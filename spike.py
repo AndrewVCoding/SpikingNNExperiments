@@ -71,8 +71,17 @@ def time_trial():
 def simulate(i):
     input = 0.0
 
+    # if 20 < i < 50:
+    #     input = 0.2 * math.sin(1 * i) if math.sin(1 * i) > 0.5 else 0.05
+    # if 70 < i < 100:
+    #     input = 0.1 if math.sin(1 * i) > 0.5 else 0.0
+    # if 130 < i < 140:
+    #     input = 0.1
+    # if not pause:
+    #     nn.step(input)
+
     if pause:
-        input = 1.2
+        input = 0.05
 
     nn.step(input)
 
@@ -91,7 +100,7 @@ def mp_graph():
     mp_subplot.plot(xs, ys)
     mp_subplot.plot(xs, nn.activation_history)
     mp_subplot.set_ylabel('(mV)')
-    # mp_subplot.set_ylim(-50, 50)
+    mp_subplot.set_ylim(-50, 50)
 
 
 def n_channel_graph():
