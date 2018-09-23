@@ -72,7 +72,7 @@ def simulate(i):
     input = 0.0
 
     if pause:
-        input = 0.5
+        input = 1.2
 
     nn.step(input)
 

@@ -18,50 +18,32 @@ class Network:
         size = input_neurons + hidden_neurons + output_neurons
 
         # Create an ndarray of zeros to represent the potential of each neuron
-        self.neuron = 0.0
-
-        # Generate the threshold for each neuron
-        # self.threshold = np.zeros(size, dtype=np.double) + 20.0
-        self.threshold_potential = 20
+        self.neuron = -30.0
 
         # Generate the resting potential of each neuron
         # self.resting_potential = np.zeros(size, dtype=np.double)
         self.resting_potential = -30.0
 
-        # Set the decay rate of each neuron
-        self.decay = 0.5
-
-        # self.axon = np.array([[0.0, 1.0, 0.0], [0.0, 0.0, 1.0], [0.0, 0.0, 0.0]])
-
-        self.activation = 0.0
-        # for x in range(0, 100):
-        #     self.activation.append(np.zeros(size, dtype=np.double))
-
         self.history = [0.0]
 
         self.activation_history = [0.0]
-        self.mp = [0.0]
+        self.mp = [self.neuron]
         self.np = [0.0]
         self.pp = [0.0]
         self.t = [0.0]
 
         # The percentage of negative and positive ion channels open
-        self.n = 0.0
+        self.n = 31.0
         self.p = 0.0
         self.p_open = 0.0
 
         self.time_step = 0.1
 
-    def state(self):
-        return [self.t, self.neuron, self.resting_potential, self.threshold_potential, self.decay, self.axon, self.activation]
-
-    def activate(self, input):
-        # self.activation = (np.sum(self.axon * self.neuron, axis=0))
-        self.activation += input
-        self.activation_history.append(input)
-
     def step(self, input):
-        self.activate(input)
+
+        # Scale the input voltage down if the neuron's voltage is below the neuron's resting potential to simulate a refractory period
+        input = input / (1 + np.exp(-10 * (self.neuron - self.resting_potential)))
+        self.activation_history.append(input)
 
         x = self.neuron
 
@@ -72,20 +54,20 @@ class Network:
         self.p += input - 0.1 * p_rate * self.p
 
         # Suppression of negative ion channels opening due to input
-        s = 1 * np.exp(-0.01 * self.p ** 2)
+        s = np.exp(-0.01 * self.p ** 2)
 
         # rate of ion channels opening based on membrane potential
-        n_open = 2 / (1 + np.exp(-1 * (x - self.resting_potential))) - 0.5
+        n_open = 2 / (1 + np.exp(-1 * (x - self.resting_potential))) - 1.1
 
         self.n += s * n_open
-        # n = -1 / (1 + np.exp(-1 * self.n)) + 0.5
 
-        # print('n: ', self.n, '\np: ', self.p, '\na: ', a, '\n')
+        # Threshold equations
+        tp = np.exp(-self.neuron ** 2)
 
         self.neuron = -s * self.n
 
         self.mp.append(self.neuron)
-        self.np.append(s)
+        self.np.append(tp)
         self.pp.append(self.n)
         self.t.append(self.t[-1] + self.time_step)
 
