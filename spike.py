@@ -6,16 +6,15 @@ import network
 import numpy as np
 import math
 
-
 simulation_speed = 10
 pause = False
 
 fig = plt.figure()
 fig.subplots_adjust(wspace=2.0, hspace=1.0)
 # oa_subplot = fig.add_subplot(2, 2, 2)
-mp_subplot = fig.add_subplot(3, 1, 1)
-nc_subplot = fig.add_subplot(3, 1, 2)
-pc_subplot = fig.add_subplot(3, 1, 3)
+# nc_subplot = fig.add_subplot(3, 1, 2)
+# pc_subplot = fig.add_subplot(3, 1, 3)
+mp_subplot = fig.add_subplot(1, 1, 1)
 nn = network.Network()
 
 window = 200
@@ -30,42 +29,6 @@ inputs = []
 def onClick(event):
     global pause
     pause ^= True
-
-
-def time_trial():
-    """
-    Run the simulation and measure the amount of time it takes to run each step
-    :return:
-    """
-    x = []
-    times = []
-
-    start = time.time()
-    for i in range(900, 1000):
-        trial = []
-        x.append(i)
-        t1 = time.time()
-        for n in range(0, 50):
-            trial = []
-            net = network.Network(i)
-            t1 = time.time()
-            for t in range(0, 100):
-                activation = 10.0 if math.sin(t / 20) > 0.099 else 0.0
-                net.step(activation)
-            t2 = time.time()
-            trial.append(t2 - t1)
-        times.append(np.mean(trial))
-        print(i, ' neurons simulated in ', time.time() - t1, ' seconds')
-    print('Total Time: ', time.time() - start)
-
-    fig, ax = plt.subplots(figsize=(12, 7))
-    ax.scatter(x, times)
-    ax.set_xlabel('neurons')
-    ax.set_ylabel('avg time (seconds)')
-    ax.set_title('Time per 100 Simulation steps averaged across 50 trials')
-    plt.grid()
-
-    plt.show()
 
 
 def simulate(i):
@@ -89,44 +52,27 @@ def simulate(i):
     #     nn.step(input)
 
 
-def get_window(x):
-    return x[-window:window]
-
-
-def mp_graph():
-    xs = nn.t
-    ys = nn.mp
-    mp_subplot.clear()
-    mp_subplot.plot(xs, ys)
-    mp_subplot.plot(xs, nn.activation_history)
-    mp_subplot.set_ylabel('(mV)')
-    mp_subplot.set_ylim(-50, 50)
-
-
-def n_channel_graph():
-    xs = nn.t
-    ys = nn.np
-    nc_subplot.clear()
-    nc_subplot.plot(xs, ys)
-    nc_subplot.set_ylabel('n_ions')
-    # nc_subplot.set_ylim(-80, 50)
-
-
-def p_channel_graph():
-    xs = nn.t
-    ys = nn.pp
-    pc_subplot.clear()
-    pc_subplot.plot(xs, ys)
-    pc_subplot.set_ylabel('d(n_ion)/d(t)')
-    # pc_subplot.set_ylim(-5, 5)
+def graph(plot, y_label='', x_label='', window=100, x=None, y=None, z=None, max=20, min=-60):
+    if x is not None and y is not None:
+        xs = x[-window:]
+        ys = y[-window:]
+        plot.clear()
+        plot.plot(xs, ys)
+        if z is not None:
+            zs = z[-window:]
+            plot.plot(xs, zs)
+        plot.set_ylabel(y_label)
+        plot.set_xlabel(x_label)
+        plot.set_ylim(min, max)
+    else:
+        print('Can not plot, insufficient data given')
 
 
 def animate(i):
     for x in range(0, 1):
         simulate(i)
-    mp_graph()
-    n_channel_graph()
-    p_channel_graph()
+
+    graph(mp_subplot, '', 'mp', 100, nn.t, nn.mp, nn.activation_history, max(nn.mp) + 5, min(nn.mp) - 5)
 
 
 if __name__ == '__main__':

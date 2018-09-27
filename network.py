@@ -45,10 +45,11 @@ class Network:
         # tp is 1 when neuron potential is close to zero
         tp = 5 * np.exp(-0.5 * self.neuron ** 2)
         # rr is 1 when neuron potential is above threshold
-        rr = 1 / (1 + np.exp(-100 * (self.neuron + 2)))
+        rr = 1 / (1 + np.exp(-1000 * self.neuron))
 
-        # Scale the input voltage down if the neuron's voltage is below the neuron's resting potential to simulate a refractory period
-        input = (1 - rr) * input / (1 + np.exp(-10 * (self.neuron - self.resting_potential)))
+        # Scale the input voltage down if the neuron's voltage is below the neuron's resting potential to simulate a
+        # refractory period
+        input = (1 - rr) * input / (1 + np.exp(-100 * (self.neuron - self.resting_potential)))
         self.activation_history.append(input)
 
         x = self.neuron
