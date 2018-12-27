@@ -2,77 +2,92 @@ import numpy as np
 import random
 import math
 
-
 class Network:
 
-    # @todo Design the axon functions
-    # @todo Design a function to build a network of any size with the proper connections
-    def __init__(self, input_neurons=1, hidden_neurons=0, output_neurons=0, axon_density=0.2):
+    def __init__(self, history):
         np.random.seed(2)
 
-        # Record the number of neurons in the three layers
-        self.input_neurons = input_neurons
-        self.hidden_neurons = hidden_neurons
-        self.output_neurons = output_neurons
+        self.history = history
 
-        size = input_neurons + hidden_neurons + output_neurons
+        self.time = 0.0
+        self.resting_potential = -70.0
+        self.membrane_potential = 0.0
+        self.positive_ions = 0.0
+        self.negative_ions = 0.0
+        self.positive_channels_in = 0.0
+        self.positive_channels_out = 0.0
+        self.negative_channels_in = 0.0
+        self.negative_channels_out = 0.0
+        self.positive_rate_in = 1 - (1 / (1 + np.exp(-0.1 * (self.positive_channels_in - 30))))
+        self.positive_rate_out = 1 - (1 / (1 + np.exp(-0.1 * (self.positive_channels_out - 30))))
+        self.negative_rate_in = 1 - (1 / (1 + np.exp(-0.1 * (self.negative_channels_in - 30))))
+        self.negative_rate_out = 1 - (1 / (1 + np.exp(-0.1 * (self.negative_channels_out - 30))))
 
-        # Create an ndarray of zeros to represent the potential of each neuron
-        self.neuron = -20.0
+        # Passive ion channels
+        self.positive_channels = 1 - 2 / (1 + np.exp(-0.1 * self.membrane_potential))
+        self.negative_channels = 2 - 4 / (1 + np.exp(0.1 * self.membrane_potential))
 
-        # Generate the resting potential of each neuron
-        # self.resting_potential = np.zeros(size, dtype=np.double)
-        self.resting_potential = -20.0
+        # Exchange channels
+        self.exchange = -2.0 * (1 - 2 / (1 + np.exp(-0.1 * (self.membrane_potential - self.resting_potential)))) * (
+                1 / (1 + np.exp(-100 * (self.membrane_potential - self.resting_potential))))
 
-        self.history = [0.0]
-
-        self.activation_history = [0.0]
-        self.mp = [self.neuron]
-        self.np = [0.0]
-        self.pp = [0.0]
-        self.t = [0.0]
-        self.ap = 9.0
-
-        # The percentage of negative and positive ion channels open
-        self.n = 31.0
-        self.p = 0.0
-        self.p_open = 0.0
-
-        self.time_step = 0.1
+        self.record()
 
     def step(self, input):
-        # Threshold equations
-        # tp is 1 when neuron potential is close to zero
-        tp = 5 * np.exp(-0.5 * self.neuron ** 2)
-        # rr is 1 when neuron potential is above threshold
-        rr = 1 / (1 + np.exp(-100 * (self.neuron + 2)))
+        self.time += 1.0
 
-        # Scale the input voltage down if the neuron's voltage is below the neuron's resting potential to simulate a refractory period
-        input = (1 - rr) * input / (1 + np.exp(-10 * (self.neuron - self.resting_potential)))
-        self.activation_history.append(input)
+        if 200 < self.time < 220:
+            self.positive_ions += 1.0
 
-        x = self.neuron
+        # account for electrostatic pressure inside the neuron
+        self.positive_channels = 1 - 2 / (1 + np.exp(-0.005 * self.membrane_potential))
+        self.negative_channels = 1 - 2 / (1 + np.exp(0.005 * self.membrane_potential))
 
-        # rate of positive ion channels opening or closing goes down when there is an input signal
-        # Starts at 1, approaches 0 when an input is applied
-        # Is also given a boost when threshold potential is reached
-        p_rate = 1 - (2 / (1 + np.exp(-1 * input)) - 1)
-        # The number of positive ions added is the input - the rate of p_ion channels closing
-        self.p += input - 0.2 * p_rate * self.p
+        # set the strength of the positive-negative ion exchange pump
+        self.exchange = -(1 - 2 / (1 + np.exp(-0.1 * (self.membrane_potential - self.resting_potential)))) * (
+                1 / (1 + np.exp(-100 * (self.membrane_potential - self.resting_potential))))
 
-        # Suppression of negative ion channels opening due to input
-        s = np.exp(-50 * self.p ** 2)
+        self.positive_ions += self.positive_channels + self.exchange * (0.99 - 2/(1 + np.exp(-1 * self.positive_ions)))
 
-        # rate of ion channels opening based on membrane potential
-        n_open = 2 / (1 + np.exp(-1 * (x - self.resting_potential))) - 1.0 + 60 * rr
+        self.negative_ions += self.negative_channels - self.exchange * (0.99 - 2/(1 + np.exp(-1 * self.negative_ions)))
 
-        self.n += s * n_open
+        self.membrane_potential = self.positive_ions - self.negative_ions
 
-        self.neuron = -s * self.n + tp * self.ap
+        self.record()
 
-        self.mp.append(self.neuron)
-        self.np.append(n_open)
-        self.pp.append(self.n)
-        self.t.append(self.t[-1] + self.time_step)
+    def record(self):
+        self.history.time.append(self.time)
+        self.history.membrane_potential.append(self.membrane_potential)
+        self.history.positive_ions.append(self.positive_ions)
+        self.history.positive_rate_in.append(self.positive_rate_in)
+        self.history.positive_rate_out.append(self.positive_rate_out)
+        self.history.positive_in.append(self.positive_channels_in)
+        self.history.positive_out.append(self.positive_channels_out)
+        self.history.negative_ions.append(self.negative_ions)
+        self.history.negative_rate_in.append(self.negative_rate_in)
+        self.history.negative_rate_out.append(self.negative_rate_out)
+        self.history.negative_in.append(self.negative_channels_in)
+        self.history.negative_out.append(self.negative_channels_out)
+        self.history.positive_channels.append(self.positive_channels)
+        self.history.negative_channels.append(self.negative_channels)
+        self.history.exchange.append(self.exchange)
 
-        return self.neuron
+
+class History:
+
+    def __init__(self):
+        self.time = []
+        self.membrane_potential = []
+        self.positive_ions = []
+        self.negative_ions = []
+        self.positive_rate_in = []
+        self.positive_rate_out = []
+        self.negative_rate_in = []
+        self.negative_rate_out = []
+        self.positive_in = []
+        self.positive_out = []
+        self.negative_in = []
+        self.negative_out = []
+        self.positive_channels = []
+        self.negative_channels = []
+        self.exchange = []

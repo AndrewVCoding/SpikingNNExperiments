@@ -6,19 +6,19 @@ import network
 import numpy as np
 import math
 
-
-simulation_speed = 10
+simulation_speed = 1
 pause = False
 
 fig = plt.figure()
-fig.subplots_adjust(wspace=2.0, hspace=1.0)
-# oa_subplot = fig.add_subplot(2, 2, 2)
-mp_subplot = fig.add_subplot(3, 1, 1)
-nc_subplot = fig.add_subplot(3, 1, 2)
-pc_subplot = fig.add_subplot(3, 1, 3)
-nn = network.Network()
+fig.set_size_inches(12, 8)
+fig.subplots_adjust(wspace=0.5, hspace=0.5)
+mp_subplot = fig.add_subplot(2, 2, 1)
+nc_subplot = fig.add_subplot(2, 2, 2)
+pc_subplot = fig.add_subplot(2, 2, 3)
+exchange_subplot = fig.add_subplot(2, 2, 4)
+# nn = network.Network()
 
-window = 200
+window = 100
 
 oa = []
 mp = []
@@ -81,58 +81,76 @@ def simulate(i):
     #     nn.step(input)
 
     if pause:
-        input = 0.05
+        input = 0.07
 
-    nn.step(input)
+    for x in range(1, simulation_speed + 1):
+        nn.step(input)
 
     # if not pause:
     #     nn.step(input)
 
 
 def get_window(x):
-    return x[-window:window]
+    return x[-window:len(x)]
 
 
 def mp_graph():
-    xs = nn.t
-    ys = nn.mp
+    xs = get_window(hist.time)
+    y1 = get_window(hist.membrane_potential)
     mp_subplot.clear()
-    mp_subplot.plot(xs, ys)
-    mp_subplot.plot(xs, nn.activation_history)
+    mp_subplot.plot(xs, y1)
     mp_subplot.set_ylabel('(mV)')
-    mp_subplot.set_ylim(-50, 50)
+    mp_subplot.set_ylim(-100, 20)
 
 
-def n_channel_graph():
-    xs = nn.t
-    ys = nn.np
+def negative_ion_graph():
+    xs = get_window(hist.time)
+    y1 = get_window(hist.negative_ions)
+    y2 = get_window(hist.negative_channels)
+    y3 = get_window(hist.negative_out)
     nc_subplot.clear()
-    nc_subplot.plot(xs, ys)
-    nc_subplot.set_ylabel('n_ions')
+    nc_subplot.plot(xs, y1)
+    nc_subplot.plot(xs, y2)
+    nc_subplot.plot(xs, y3)
+    nc_subplot.set_ylabel('negative_ions')
     # nc_subplot.set_ylim(-80, 50)
 
 
-def p_channel_graph():
-    xs = nn.t
-    ys = nn.pp
+def positive_ion_graph():
+    xs = get_window(hist.time)
+    y1 = get_window(hist.positive_ions)
+    y2 = get_window(hist.positive_channels)
+    y3 = get_window(hist.positive_out)
     pc_subplot.clear()
-    pc_subplot.plot(xs, ys)
-    pc_subplot.set_ylabel('d(n_ion)/d(t)')
+    pc_subplot.plot(xs, y1)
+    pc_subplot.plot(xs, y2)
+    pc_subplot.plot(xs, y3)
+    pc_subplot.set_ylabel('positive_ions')
     # pc_subplot.set_ylim(-5, 5)
+
+
+def exchange_graph():
+    xs = get_window(hist.time)
+    y1 = get_window(hist.exchange)
+    exchange_subplot.clear()
+    exchange_subplot.plot(xs, y1)
+    exchange_subplot.set_ylabel('exchange_rate')
+    exchange_subplot.set_ylim(-1.1, 1.1)
 
 
 def animate(i):
     for x in range(0, 1):
         simulate(i)
     mp_graph()
-    n_channel_graph()
-    p_channel_graph()
+    negative_ion_graph()
+    positive_ion_graph()
+    exchange_graph()
 
 
 if __name__ == '__main__':
     np.set_printoptions(precision=2)
-
-    print(nn.t, nn.activation_history)
+    hist = network.History()
+    nn = network.Network(hist)
 
     fig.canvas.mpl_connect('button_press_event', onClick)
     ani = animation.FuncAnimation(fig, animate, interval=1)
